@@ -27,8 +27,9 @@ jobs:
         run: godot --headless --path godot --editor --quit
       - name: Export Web build
         run: |
-          mkdir -p godot/build
-          godot --headless --path godot --export-release "Web" godot/build/index.html
+          cd godot
+          mkdir -p build
+          godot --headless --path . --export-release "Web" build/index.html
       - name: Upload Web build
         uses: actions/upload-artifact@v4
         with:
