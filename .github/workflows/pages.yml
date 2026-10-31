@@ -1,7 +1,7 @@
 name: Deploy WreckWorks Demo
 on:
   push:
-    branches: [main]
+    branches: [main, godot-wrecking-ball]
   workflow_dispatch:
 permissions:
   contents: read
