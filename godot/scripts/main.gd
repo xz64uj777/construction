@@ -38,6 +38,7 @@ var turn_input := 0.0
 var drive_input := 0.0
 var winch_input := 0.0
 var swing_boost := false
+var ball_joystick_x := 0.0
 var toast_time := 0.0
 var damage_label: Label
 var damage_bar: ProgressBar
@@ -383,23 +384,21 @@ func _build_ui() -> void:
 	var swing_stick := TouchJoystick.new()
 	swing_stick.name = "BallSwingJoystick"
 	swing_stick.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	swing_stick.position = Vector2(-218, -124)
+	swing_stick.position = Vector2(-122, -124)
 	swing_stick.size = Vector2(100, 100)
 	swing_stick.changed.connect(func(v: Vector2):
-		swing_velocity += v.x * 0.035
-		swing_angle = clampf(swing_angle + v.y * 0.008, -1.1, 1.1)
+		ball_joystick_x = v.x
+		swing_velocity += v.y * 0.035
 	)
 	mobile_controls.add_child(swing_stick)
 	var swing_label := Label.new()
 	swing_label.text = "BALL SWING"
 	swing_label.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	swing_label.position = Vector2(-218, -146)
+	swing_label.position = Vector2(-122, -146)
 	swing_label.add_theme_font_size_override("font_size", 10)
 	mobile_controls.add_child(swing_label)
-	_add_button(mobile_controls, "WINCH +", Vector2(-210, -90), Vector2(92, 54), func(): winch_input = -1.0, func(): winch_input = 0.0, false)
-	_add_button(mobile_controls, "WINCH −", Vector2(-112, -90), Vector2(92, 54), func(): winch_input = 1.0, func(): winch_input = 0.0, false)
-	_add_button(mobile_controls, "SWING", Vector2(-210, -152), Vector2(92, 52), func(): swing_boost = true, func(): swing_boost = false, false)
-	_add_button(mobile_controls, "RELEASE!", Vector2(-112, -152), Vector2(92, 52), _release_ball, func(): pass, false, true)
+	_add_button(mobile_controls, "HOIST", Vector2(-202, -90), Vector2(88, 48), func(): winch_input = -1.0, func(): winch_input = 0.0, false)
+	_add_button(mobile_controls, "LOWER", Vector2(-108, -90), Vector2(88, 48), func(): winch_input = 1.0, func(): winch_input = 0.0, false)
 	var reset := Button.new()
 	reset.text = "RESET ↻"
 	reset.position = Vector2(-112, 18)
@@ -523,8 +522,6 @@ func _process(delta: float) -> void:
 		turn_input = -1.0
 	elif Input.is_key_pressed(KEY_D):
 		turn_input = 1.0
-	else:
-		turn_input = 0.0
 	if Input.is_key_pressed(KEY_W):
 		winch_input = -1.0
 	elif Input.is_key_pressed(KEY_S):
@@ -545,6 +542,8 @@ func _process(delta: float) -> void:
 	rope_length = clampf(rope_length + winch_input * dt * 1.3, 1.8, 6.2)
 	if swing_boost:
 		swing_velocity += dt * 1.25
+	if absf(ball_joystick_x) > 0.08:
+		swing_velocity += ball_joystick_x * dt * 2.4
 	swing_velocity += (-sin(swing_angle) * 2.0 - swing_velocity * 0.32) * dt
 	swing_angle += swing_velocity * dt
 	if absf(swing_angle) > 1.1:
