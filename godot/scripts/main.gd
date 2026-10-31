@@ -125,13 +125,13 @@ func _build_building() -> void:
 					continue
 				var x := -WALL_W / 2.0 + (col + 0.5) * WALL_W / WALL_COLS
 				var y := (row + 0.5) * WALL_H / WALL_ROWS
-				var z := face * WALL_D / 2.0
+				var z: float = float(face) * WALL_D / 2.0
 				var panel := _make_panel(building, Vector3(x, y, z), Vector3(WALL_W / WALL_COLS - 0.04, WALL_H / WALL_ROWS - 0.04, 0.22), colors[(row + col) % colors.size()])
 				wall_panels.append(panel)
 	for side in [-1, 1]:
 		for row in range(WALL_ROWS):
 			for col in range(4):
-				var pos := Vector3(side * WALL_W / 2.0, (row + 0.5) * WALL_H / WALL_ROWS, -WALL_D / 2.0 + (col + 0.5) * WALL_D / 4.0)
+				var pos: Vector3 = Vector3(float(side) * WALL_W / 2.0, (row + 0.5) * WALL_H / WALL_ROWS, -WALL_D / 2.0 + (col + 0.5) * WALL_D / 4.0)
 				var panel := _make_panel(building, pos, Vector3(0.22, WALL_H / WALL_ROWS - 0.04, WALL_D / 4.0 - 0.04), colors[(row + col + 1) % colors.size()])
 				wall_panels.append(panel)
 	for col in range(4):
