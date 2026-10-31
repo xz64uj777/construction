@@ -397,8 +397,8 @@ func _build_ui() -> void:
 	swing_label.position = Vector2(-122, -146)
 	swing_label.add_theme_font_size_override("font_size", 10)
 	mobile_controls.add_child(swing_label)
-	_add_button(mobile_controls, "HOIST", Vector2(-202, -90), Vector2(88, 48), func(): winch_input = -1.0, func(): winch_input = 0.0, false)
-	_add_button(mobile_controls, "LOWER", Vector2(-108, -90), Vector2(88, 48), func(): winch_input = 1.0, func(): winch_input = 0.0, false)
+	_add_button(mobile_controls, "HOIST", Vector2(-202, -184), Vector2(88, 48), func(): winch_input = -1.0, func(): winch_input = 0.0, false)
+	_add_button(mobile_controls, "LOWER", Vector2(-108, -184), Vector2(88, 48), func(): winch_input = 1.0, func(): winch_input = 0.0, false)
 	var reset := Button.new()
 	reset.text = "RESET ↻"
 	reset.position = Vector2(-112, 18)
