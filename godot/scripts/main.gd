@@ -45,6 +45,43 @@ var toast_label: Label
 var mobile_controls: Control
 var initial_crane_position := Vector3(5.1, 0, 3.1)
 
+class TouchJoystick extends Control:
+	signal changed(value: Vector2)
+	var knob := Vector2.ZERO
+	var held := false
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_STOP
+		queue_redraw()
+	func _draw() -> void:
+		var radius := minf(size.x, size.y) * 0.46
+		var center := size * 0.5
+		draw_circle(center, radius, Color(0.04, 0.08, 0.1, 0.78))
+		draw_arc(center, radius, 0.0, TAU, 48, Color("#c5d0d4"), 2.0, true)
+		draw_line(center - Vector2(0, radius * 0.65), center + Vector2(0, radius * 0.65), Color(1, 1, 1, 0.2), 1.0)
+		draw_line(center - Vector2(radius * 0.65, 0), center + Vector2(radius * 0.65, 0), Color(1, 1, 1, 0.2), 1.0)
+		draw_circle(center + knob * radius * 0.62, radius * 0.36, Color("#e4a72a"))
+		draw_arc(center + knob * radius * 0.62, radius * 0.36, 0.0, TAU, 32, Color("#fff0c2"), 2.0, true)
+	func _gui_input(event: InputEvent) -> void:
+		if event is InputEventScreenTouch or event is InputEventMouseButton:
+			if event is InputEventMouseButton and event.button_index != MOUSE_BUTTON_LEFT:
+				return
+			held = event.pressed
+			_update_knob(event.position)
+			accept_event()
+		elif (event is InputEventScreenDrag or event is InputEventMouseMotion) and held:
+			_update_knob(event.position)
+			accept_event()
+	func _update_knob(pos: Vector2) -> void:
+		if not held:
+			knob = Vector2.ZERO
+			changed.emit(Vector2.ZERO)
+		else:
+			knob = (pos - size * 0.5) / maxf(1.0, minf(size.x, size.y) * 0.30)
+			if knob.length() > 1.0:
+				knob = knob.normalized()
+			changed.emit(Vector2(knob.x, -knob.y))
+		queue_redraw()
+
 func _ready() -> void:
 	_build_world()
 	total_panel_count = wall_panels.size()
@@ -326,9 +363,38 @@ func _build_ui() -> void:
 	mobile_controls.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mobile_controls.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(mobile_controls)
-	_add_button(mobile_controls, "◀", Vector2(18, -90), Vector2(58, 58), func(): turn_input = -1.0, func(): turn_input = 0.0, true)
-	_add_button(mobile_controls, "▲", Vector2(82, -90), Vector2(58, 58), func(): drive_input = 1.0, func(): drive_input = 0.0, true)
-	_add_button(mobile_controls, "▶", Vector2(146, -90), Vector2(58, 58), func(): turn_input = 1.0, func(): turn_input = 0.0, true)
+	var drive_stick := TouchJoystick.new()
+	drive_stick.name = "DriveJoystick"
+	drive_stick.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	drive_stick.position = Vector2(18, -124)
+	drive_stick.size = Vector2(100, 100)
+	drive_stick.changed.connect(func(v: Vector2):
+		turn_input = v.x
+		drive_input = v.y
+	)
+	mobile_controls.add_child(drive_stick)
+	var drive_label := Label.new()
+	drive_label.text = "DRIVE / TURN"
+	drive_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	drive_label.position = Vector2(18, -146)
+	drive_label.add_theme_font_size_override("font_size", 10)
+	mobile_controls.add_child(drive_label)
+	var swing_stick := TouchJoystick.new()
+	swing_stick.name = "BallSwingJoystick"
+	swing_stick.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	swing_stick.position = Vector2(-218, -124)
+	swing_stick.size = Vector2(100, 100)
+	swing_stick.changed.connect(func(v: Vector2):
+		swing_velocity += v.x * 0.035
+		swing_angle = clampf(swing_angle + v.y * 0.008, -1.1, 1.1)
+	)
+	mobile_controls.add_child(swing_stick)
+	var swing_label := Label.new()
+	swing_label.text = "BALL SWING"
+	swing_label.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	swing_label.position = Vector2(-218, -146)
+	swing_label.add_theme_font_size_override("font_size", 10)
+	mobile_controls.add_child(swing_label)
 	_add_button(mobile_controls, "WINCH +", Vector2(-210, -90), Vector2(92, 54), func(): winch_input = -1.0, func(): winch_input = 0.0, false)
 	_add_button(mobile_controls, "WINCH −", Vector2(-112, -90), Vector2(92, 54), func(): winch_input = 1.0, func(): winch_input = 0.0, false)
 	_add_button(mobile_controls, "SWING", Vector2(-210, -152), Vector2(92, 52), func(): swing_boost = true, func(): swing_boost = false, false)
