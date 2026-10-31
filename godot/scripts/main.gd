@@ -1,6 +1,7 @@
 extends Node3D
 
 # WreckWorks Godot prototype: crawler crane + animated wrecking ball.
+# Mobile controls: visible dual touch joysticks, one-finger orbit, two-finger pinch zoom.
 # Wall panels are individual physics bodies; impacts remove panels and throw rubble.
 
 const WALL_W := 8.8
