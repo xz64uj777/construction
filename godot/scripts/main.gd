@@ -19,6 +19,7 @@ var ball_rig: Node3D
 var ball: RigidBody3D
 var cable: MeshInstance3D
 var wall_panels: Array[Node3D] = []
+var total_panel_count := 0
 var rubble_count := 0
 var swing_angle := 0.0
 var swing_velocity := 0.0
@@ -37,6 +38,7 @@ var initial_crane_position := Vector3(5.1, 0, 3.1)
 
 func _ready() -> void:
 	_build_world()
+	total_panel_count = wall_panels.size()
 	_build_crane()
 	_build_ui()
 	_update_stats()
@@ -145,6 +147,7 @@ func _make_panel(parent: Node3D, pos: Vector3, size: Vector3, color: Color) -> R
 	body.position = pos
 	body.mass = maxf(0.8, size.x * size.y * size.z * 2.5)
 	body.gravity_scale = 1.0
+	body.freeze = true
 	body.collision_layer = 2
 	body.collision_mask = 1
 	body.set_meta("breakable", true)
@@ -376,6 +379,7 @@ func _reset_job() -> void:
 		if child.name == "Condemned brick workshop":
 			child.queue_free()
 	_build_building()
+	total_panel_count = wall_panels.size()
 	crane_root.position = initial_crane_position
 	upper.rotation = Vector3.ZERO
 	boom_pivot.rotation.z = -0.43
@@ -483,10 +487,9 @@ func _update_stats() -> void:
 	for panel in wall_panels:
 		if is_instance_valid(panel):
 			total += 1
-	var destroyed := 0
-	# The count is tracked as removed panels; reset restores it.
-	destroyed = maxi(0, 90 - total)
-	var percent := clampf(float(destroyed) / 90.0, 0.0, 1.0)
+	# Remaining panels are tracked directly; a hit removes a panel from this list.
+	var destroyed := maxi(0, total_panel_count - total)
+	var percent := clampf(float(destroyed) / maxf(1.0, float(total_panel_count)), 0.0, 1.0)
 	if damage_label:
 		damage_label.text = "BUILDING DAMAGE  %d%%" % roundi(percent * 100.0)
 		damage_bar.value = percent * 100.0
