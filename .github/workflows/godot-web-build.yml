@@ -1,0 +1,37 @@
+name: Build Godot WreckWorks Web Prototype
+
+on:
+  push:
+    branches: [godot-wrecking-ball]
+    paths:
+      - "godot/**"
+      - ".github/workflows/godot-web-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export-web:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Godot and export templates
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.4.1
+          use-dotnet: false
+          include-templates: true
+      - name: Validate project
+        run: godot --headless --path godot --editor --quit
+      - name: Export Web build
+        run: |
+          mkdir -p godot/build
+          godot --headless --path godot --export-release "Web" godot/build/index.html
+      - name: Upload Web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: wreckworks-godot-web
+          path: godot/build/
+          if-no-files-found: error
