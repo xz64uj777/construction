@@ -11,6 +11,15 @@ const WALL_ROWS := 5
 const BOOM_LEN := 7.2
 
 var camera: Camera3D
+var camera_target := Vector3(0.2, 2.0, -0.8)
+var camera_yaw := 0.0
+var camera_pitch := 0.28
+var camera_distance := 21.0
+var camera_dragging := false
+var last_camera_pointer := Vector2.ZERO
+var touch_points: Dictionary = {}
+var pinch_start_distance := 0.0
+var pinch_start_zoom := 21.0
 var crane_root: Node3D
 var upper: Node3D
 var boom_pivot: Node3D
@@ -71,7 +80,11 @@ func _build_world() -> void:
 	camera = Camera3D.new()
 	camera.fov = 48
 	camera.position = Vector3(10.8, 9.4, 16.4)
-	camera.look_at(Vector3(0.2, 2.0, -0.8), Vector3.UP)
+	camera_target = Vector3(0.2, 2.0, -0.8)
+	camera_distance = camera.position.distance_to(camera_target)
+	camera_yaw = atan2(camera.position.x - camera_target.x, camera.position.z - camera_target.z)
+	camera_pitch = asin(clampf((camera.position.y - camera_target.y) / camera_distance, -0.9, 0.9))
+	camera.look_at(camera_target, Vector3.UP)
 	add_child(camera)
 	camera.current = true
 
@@ -390,8 +403,55 @@ func _reset_job() -> void:
 	_update_stats()
 	_show_toast("Fresh demolition contract")
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			touch_points[event.index] = event.position
+			if touch_points.size() == 2:
+				var points: Array = touch_points.values()
+				pinch_start_distance = points[0].distance_to(points[1])
+				pinch_start_zoom = camera_distance
+				camera_dragging = false
+			elif touch_points.size() == 1:
+				last_camera_pointer = event.position
+				camera_dragging = true
+		else:
+			touch_points.erase(event.index)
+			if touch_points.size() < 2:
+				pinch_start_distance = 0.0
+			camera_dragging = false
+	elif event is InputEventScreenDrag:
+		touch_points[event.index] = event.position
+		if touch_points.size() >= 2:
+			var points: Array = touch_points.values()
+			var distance: float = points[0].distance_to(points[1])
+			if pinch_start_distance > 0.0:
+				camera_distance = clampf(pinch_start_zoom * pinch_start_distance / maxf(distance, 1.0), 7.0, 38.0)
+		elif camera_dragging:
+			var delta_pos: Vector2 = event.position - last_camera_pointer
+			camera_yaw -= delta_pos.x * 0.008
+			camera_pitch = clampf(camera_pitch + delta_pos.y * 0.006, -0.12, 1.12)
+			last_camera_pointer = event.position
+	elif event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			camera_dragging = event.pressed
+			last_camera_pointer = event.position
+		elif event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
+			camera_distance = clampf(camera_distance - 1.5, 7.0, 38.0)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
+			camera_distance = clampf(camera_distance + 1.5, 7.0, 38.0)
+	elif event is InputEventMouseMotion and camera_dragging and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		var delta_pos: Vector2 = event.position - last_camera_pointer
+		camera_yaw -= delta_pos.x * 0.008
+		camera_pitch = clampf(camera_pitch + delta_pos.y * 0.006, -0.12, 1.12)
+		last_camera_pointer = event.position
+
 func _process(delta: float) -> void:
 	var dt := minf(delta, 0.035)
+	var cp := cos(camera_pitch)
+	var camera_offset := Vector3(sin(camera_yaw) * cp, sin(camera_pitch), cos(camera_yaw) * cp) * camera_distance
+	camera.position = camera.position.lerp(camera_target + camera_offset, minf(1.0, dt * 10.0))
+	camera.look_at(camera_target, Vector3.UP)
 	if Input.is_key_pressed(KEY_A):
 		turn_input = -1.0
 	elif Input.is_key_pressed(KEY_D):
