@@ -37,6 +37,7 @@ var rope_length := 3.6
 var turn_input := 0.0
 var drive_input := 0.0
 var winch_input := 0.0
+var button_winch_input := 0.0
 var swing_boost := false
 var boom_joystick_x := 0.0
 var boom_joystick_y := 0.0
@@ -380,6 +381,7 @@ func _build_ui() -> void:
 	mobile_controls.add_child(drive_stick)
 	var drive_label := Label.new()
 	drive_label.text = "DRIVE / TURN"
+	drive_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	drive_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	drive_label.position = Vector2(18, -146)
 	drive_label.add_theme_font_size_override("font_size", 10)
@@ -397,12 +399,13 @@ func _build_ui() -> void:
 	mobile_controls.add_child(swing_stick)
 	var swing_label := Label.new()
 	swing_label.text = "BOOM CONTROL"
+	swing_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	swing_label.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	swing_label.position = Vector2(-122, -146)
 	swing_label.add_theme_font_size_override("font_size", 10)
 	mobile_controls.add_child(swing_label)
-	_add_button(mobile_controls, "HOIST", Vector2(-202, -184), Vector2(88, 48), func(): winch_input = -1.0, func(): winch_input = 0.0, false)
-	_add_button(mobile_controls, "LOWER", Vector2(-108, -184), Vector2(88, 48), func(): winch_input = 1.0, func(): winch_input = 0.0, false)
+	_add_button(mobile_controls, "HOIST", Vector2(-202, -184), Vector2(88, 48), func(): button_winch_input = -1.0, func(): button_winch_input = 0.0, false)
+	_add_button(mobile_controls, "LOWER", Vector2(-108, -184), Vector2(88, 48), func(): button_winch_input = 1.0, func(): button_winch_input = 0.0, false)
 	var reset := Button.new()
 	reset.text = "RESET ↻"
 	reset.position = Vector2(-112, 18)
@@ -526,12 +529,12 @@ func _process(delta: float) -> void:
 		turn_input = -1.0
 	elif Input.is_key_pressed(KEY_D):
 		turn_input = 1.0
+	# UI buttons own their held state; keyboard input temporarily overrides it.
+	winch_input = button_winch_input
 	if Input.is_key_pressed(KEY_W):
 		winch_input = -1.0
 	elif Input.is_key_pressed(KEY_S):
 		winch_input = 1.0
-	else:
-		winch_input = 0.0
 	if Input.is_key_pressed(KEY_SPACE):
 		if not swing_boost:
 			_release_ball()
