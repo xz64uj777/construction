@@ -368,9 +368,11 @@ func _build_ui() -> void:
 	root.add_child(mobile_controls)
 	var drive_stick := TouchJoystick.new()
 	drive_stick.name = "DriveJoystick"
-	drive_stick.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	drive_stick.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_KEEP_SIZE, 0)
 	drive_stick.position = Vector2(18, -124)
-	drive_stick.size = Vector2(100, 100)
+	drive_stick.size = Vector2(112, 112)
+	drive_stick.z_index = 50
+	drive_stick.visible = true
 	drive_stick.changed.connect(func(v: Vector2):
 		turn_input = v.x
 		drive_input = v.y
@@ -384,9 +386,9 @@ func _build_ui() -> void:
 	mobile_controls.add_child(drive_label)
 	var swing_stick := TouchJoystick.new()
 	swing_stick.name = "BallSwingJoystick"
-	swing_stick.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	swing_stick.position = Vector2(-122, -124)
-	swing_stick.size = Vector2(100, 100)
+	swing_stick.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_KEEP_SIZE, 0)
+	swing_stick.position = Vector2(-134, -124)
+	swing_stick.size = Vector2(112, 112)
 	swing_stick.name = "BoomJoystick"
 	swing_stick.changed.connect(func(v: Vector2):
 		boom_joystick_x = v.x
