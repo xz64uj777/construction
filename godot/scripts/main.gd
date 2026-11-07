@@ -38,7 +38,8 @@ var turn_input := 0.0
 var drive_input := 0.0
 var winch_input := 0.0
 var swing_boost := false
-var ball_joystick_x := 0.0
+var boom_joystick_x := 0.0
+var boom_joystick_y := 0.0
 var toast_time := 0.0
 var damage_label: Label
 var damage_bar: ProgressBar
@@ -386,13 +387,14 @@ func _build_ui() -> void:
 	swing_stick.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	swing_stick.position = Vector2(-122, -124)
 	swing_stick.size = Vector2(100, 100)
+	swing_stick.name = "BoomJoystick"
 	swing_stick.changed.connect(func(v: Vector2):
-		ball_joystick_x = v.x
-		swing_velocity += v.y * 0.035
+		boom_joystick_x = v.x
+		boom_joystick_y = v.y
 	)
 	mobile_controls.add_child(swing_stick)
 	var swing_label := Label.new()
-	swing_label.text = "BALL SWING"
+	swing_label.text = "BOOM CONTROL"
 	swing_label.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	swing_label.position = Vector2(-122, -146)
 	swing_label.add_theme_font_size_override("font_size", 10)
@@ -537,13 +539,13 @@ func _process(delta: float) -> void:
 	if Input.is_key_pressed(KEY_R):
 		pass
 	upper.rotation.y += turn_input * dt * 0.48
+	upper.rotation.y += boom_joystick_x * dt * 0.75
+	boom_pivot.rotation.z = clampf(boom_pivot.rotation.z - boom_joystick_y * dt * 0.65, -1.05, -0.12)
 	crane_root.position.x += drive_input * cos(upper.rotation.y) * dt * 0.9
 	crane_root.position.z -= drive_input * sin(upper.rotation.y) * dt * 0.9
 	rope_length = clampf(rope_length + winch_input * dt * 1.3, 1.8, 6.2)
 	if swing_boost:
 		swing_velocity += dt * 1.25
-	if absf(ball_joystick_x) > 0.08:
-		swing_velocity += ball_joystick_x * dt * 2.4
 	swing_velocity += (-sin(swing_angle) * 2.0 - swing_velocity * 0.32) * dt
 	swing_angle += swing_velocity * dt
 	if absf(swing_angle) > 1.1:
